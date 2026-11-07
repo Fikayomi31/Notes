@@ -8,7 +8,7 @@ from app.core.config import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
-def create_acces_token(subject: str) -> str:
+def create_access_token(subject: str) -> str:
     expired_at = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     payload = {
