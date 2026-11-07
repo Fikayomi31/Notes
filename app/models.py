@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, func, Enum as SqlEnum
-from sqlalchemy.orm import relationship, mapped_column, Mapping, Mapped
+from sqlalchemy.orm import relationship, mapped_column, Mapped
 
 from app.database import Base
 
@@ -43,4 +43,3 @@ class Note(Base):
     # Relationship to the User model
     user: Mapped["User"] = relationship("User", back_populates="notes")
 
-    
