@@ -14,14 +14,14 @@ from app.models import User
 # Extract bearer token from request headers
 bearer_scheme = HTTPBearer(auto_error=False)
 
-DBsession = Annotated[
+DBSession = Annotated[
     AsyncSession,
     Depends(get_db),
 ]
 
 async def get_current_user(
         credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-        db: DBsession = None,
+        db: DBSession = None,
 ) -> User:
 
     # Validate JWT token and retrieve the current user
