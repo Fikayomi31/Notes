@@ -1,40 +1,50 @@
-from fastapi import HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordBearer
-from jwt.exceptions import InvalidTokenError
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, exc
+from typing import Annotated
 from collections.abc import AsyncGenerator
 
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_db
 from app.core.jwt import decode_access_token
-from app.database import AsyncSessionLocal
 from app.models import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+# Extract bearer token from request headers
+bearer_scheme = HTTPBearer(auto_error=False)
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionLocal() as session:
-        yield session
+DBsession = Annotated[
+    AsyncSession,
+    Depends(get_db),
+]
 
 async def get_current_user(
-        token: str = Depends(oauth2_scheme), 
-        db: AsyncSession = Depends(get_db)
+        credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+        db: DBsession = None,
 ) -> User:
+
+    # Validate JWT token and retrieve the current user
     unauthorized = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+    if credentials is None:
+        raise unauthorized
+
     try:
-        payload = decode_access_token(token)
+        payload = decode_access_token(credentials.credentials)
         user_id =  int(payload["sub"])
 
         if user_id <= 0:
             raise ValueError("Invalid user ID in token payload")
 
-    except (ValueError, InvalidTokenError):
-        raise unauthorized from exc
+    except (ValueError, KeyError):
+        raise unauthorized
 
+    # retrieve the user from the database
     user = await db.scalar(
         select(User).where(User.id == user_id)
     )
