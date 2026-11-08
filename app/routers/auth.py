@@ -7,7 +7,7 @@ from app.core.jwt import create_access_token
 from app.dependencies import get_db, get_current_user
 from app.core.security import verify_password, hash_password
 from app.models import User, UserRole
-from app.schemas import TokenResponse, UserCreate, UserLogin,UserResponse, Token
+from app.schemas import TokenResponse, UserCreate, UserLogin,UserResponse
 
 router = APIRouter(
     prefix="/api/auth",
@@ -96,7 +96,8 @@ async def login(
     }
 
 
-@router.get("/me", response_model=UserRead)
+
+@router.get("/me", response_model=UserResponse)
 async def read_current_user(
     current_user: User = Depends(get_current_user)
 ):

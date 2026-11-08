@@ -8,11 +8,11 @@ from app.models import UserRole
 class UserCreate(BaseModel):
     username: str = Field(..., max_length=50)
     email: EmailStr
-    password: str = Field(min_length=6, max_length=8)
+    password: str = Field(min_length=6, max_length=12)
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=6, max_length=8)
+    password: str = Field(min_length=6, max_length=12)
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

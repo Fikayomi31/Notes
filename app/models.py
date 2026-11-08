@@ -25,7 +25,7 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False) 
 
     # One user can have many notes.
-    notes: Mapped[list["Note"]] = relationship("Note", back_populates="owner", cascade="all, delete-orphan")
+    notes: Mapped[list["Note"]] = relationship("Note", back_populates="user", cascade="all, delete-orphan")
 
 class Note(Base):
     __tablename__ = "notes"
