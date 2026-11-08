@@ -63,6 +63,25 @@ async def create_note(
             detail="An error occurred while creating the note.",
         )
 
+@router.get("/", response_model=list[NoteResponse])
+async def get_notes(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        result = await db.scalars(
+            select(Note)
+            .where(Note.user_id == current_user.id)
+            .order_by(Note.created_at.desc())
+        )
+
+        return result.all()
+    
+    except SQLAlchemyError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while retrieving the notes.",
+)
     
 @router.get("/{note_id}", response_model=NoteResponse)
 async def get_note(
