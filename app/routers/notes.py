@@ -130,4 +130,37 @@ async def update_note(
             detail="An error occurred while updating the note.",
         )
 
-    
+
+
+
+@router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_note(
+    note_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        note = await db.scalar(
+            select(Note).where(
+                Note.id == note_id,
+                Note.user_id == current_user.id
+            )
+        )
+
+        if note is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Note not found."
+            )
+
+        await db.delete(note)
+        await db.commit()
+
+        return {"detail": "Note deleted successfully."}
+
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while deleting the note.",
+        )
