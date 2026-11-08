@@ -5,12 +5,12 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from  app.database import get_db
 from app.schemas import NoteCreate, NoteResponse, NoteUpdate
-from app.models import Note
+from app.models import Note, User
 from app.dependencies import get_current_user
 
 
 router = APIRouter(
-    prefix="/api.notes",
+    prefix="/api/notes",
     tags=["Notes"],
 )
 
@@ -64,3 +64,29 @@ async def create_note(
         )
 
     
+@router.get("/{note_id}", response_model=NoteResponse)
+async def get_note(
+    note_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        note = await db.scalar(
+            select(Note).where(
+                Note.id == note_id,
+                Note.user_id == current_user.id
+            )
+        )
+
+        if note is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Note not found."
+            )
+        return note
+    except SQLAlchemyError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while retrieving the note.", 
+        )
+

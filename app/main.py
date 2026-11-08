@@ -3,6 +3,7 @@ from fastapi import FastAPI, Depends
 from app.core.permissions import require_role
 from app.models import UserRole
 from app.routers.auth import router as auth_router
+from app.routers.notes import router as notes_router
 
 app = FastAPI(
     title="User Authentication API",
@@ -10,6 +11,7 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.include_router(notes_router)
 
 @app.get("/")
 async def root():
