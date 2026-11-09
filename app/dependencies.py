@@ -4,12 +4,12 @@ from collections.abc import AsyncGenerator
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import select
+from sqlalchemy import select, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.core.jwt import decode_access_token
-from app.models import User
+from app.models import User, UserRole
 
 # Extract bearer token from request headers
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -53,4 +53,14 @@ async def get_current_user(
         raise unauthorized
 
     return user
-    
+
+def require_admin(
+        current_user: User = Depends(get_current_user),
+) -> User:
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to perform this action.",
+        )
+    return current_user
+
