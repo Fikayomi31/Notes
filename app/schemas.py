@@ -28,8 +28,8 @@ class NoteCreate(BaseModel):
     content: str = Field(min_length=1)
 
 class NoteUpdate(BaseModel):
-    title: str |None = Field(min_length=1, max_length=100)
-    content: str | None = Field(min_length=1)
+    title: str | None = Field(default=None, min_length=1, max_length=100)
+    content: str | None = Field(default=None, min_length=1)
 
 class NoteResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

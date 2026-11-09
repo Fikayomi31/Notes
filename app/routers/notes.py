@@ -117,25 +117,49 @@ async def update_note(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    
+    updates = {
+        field: value
+        for field, value in note_data.model_dump(exclude_unset=True).items()
+        if value is not None
+    }
+
+    if not updates:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Provide at least one field to update (title or content).",
+        )
+
     try:
         note = await db.scalar(
             select(Note).where(
                 Note.id == note_id,
-                Note.user_id == current_user.id
+                Note.user_id == current_user.id,
             )
         )
 
         if note is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Note not found."
+                detail="Note not found.",
             )
 
-        # Update the note fields if provided
-        if note_data.title is not None:
-            note.title = note_data.title
-        if note_data.content is not None:
-            note.content = note_data.content
+        if "title" in updates:
+            duplicate = await db.scalar(
+                select(Note.id).where(
+                    Note.title.ilike(updates["title"].strip()),
+                    Note.user_id == current_user.id,
+                    Note.id != note_id,
+                )
+            )
+            if duplicate is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="A note with the same title already exists for this user.",
+                )
+
+        for field, value in updates.items():
+            setattr(note, field, value)
 
         await db.commit()
         await db.refresh(note)
@@ -148,8 +172,6 @@ async def update_note(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while updating the note.",
         )
-
-
 
 
 @router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
